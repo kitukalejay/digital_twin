@@ -157,6 +157,17 @@ wss.on("connection", (ws) => {
         });
       } else if (data.type === "command") {
         // Handle other command types if needed
+        console.log("Command received:", data.payload);
+
+        // Broadcast to all clients except sender
+        clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: "command",
+              payload: data.payload
+            }));
+          }
+        });
       }
     } catch (e) {
       console.error("Invalid JSON:", e);
