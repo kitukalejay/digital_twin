@@ -38,35 +38,86 @@
 //   console.log(`Serving from: ${publicPath}`);
 // });
 
+
+
+
+
+
+
+
+
+// const WebSocket = require('ws');
+// const http = require('http');
+
+// const port = process.env.PORT || 10000;
+
+// // Create an HTTP server (optional response to HTTP requests)
+// const server = http.createServer((req, res) => {
+//   res.writeHead(200);
+//   res.end("WebSocket Server is running");
+// });
+
+// // Attach WebSocket server to the HTTP server
+// const wss = new WebSocket.Server({ server });
+
+// wss.on('connection', (ws) => {
+//   console.log('Client connected');
+
+//   ws.on('message', (message) => {
+//     const text = message.toString();  // convert Buffer to string
+//     console.log('Received:', text);
+//     ws.send(text);  // echo as string
+//   });
+  
+
+//   ws.on('close', () => {
+//     console.log('Client disconnected');
+//   });
+// });
+
+// server.listen(port, () => {
+//   console.log(`Server running on port ${port}`);
+// });
+
+
+
+
+
+
+
 const WebSocket = require('ws');
 const http = require('http');
 
 const port = process.env.PORT || 10000;
 
-// Create an HTTP server (optional response to HTTP requests)
 const server = http.createServer((req, res) => {
   res.writeHead(200);
   res.end("WebSocket Server is running");
 });
 
-// Attach WebSocket server to the HTTP server
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
-  console.log('Client connected');
+  console.log('🔌 Client connected');
 
   ws.on('message', (message) => {
-    const text = message.toString();  // convert Buffer to string
-    console.log('Received:', text);
-    ws.send(text);  // echo as string
+    const text = message.toString().trim();
+    console.log('📩 Received:', text);
+
+    // 🔁 Broadcast the message to ALL connected clients (including ESP32)
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(text);
+      }
+    });
   });
-  
 
   ws.on('close', () => {
-    console.log('Client disconnected');
+    console.log('❌ Client disconnected');
   });
 });
 
 server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`🚀 Server running on port ${port}`);
 });
+
