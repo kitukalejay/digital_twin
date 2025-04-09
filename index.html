@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 LED Control</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 50px;
+      background-color: #f0f0f0;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      transition: 0.2s ease-in-out;
+    }
+
+    .btn:hover {
+      background-color: #2980b9;
+    }
+
+    .status {
+      margin-top: 20px;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>ESP32 LED Control Panel</h2>
+
+  <button class="btn" onclick="sendCmd('LED32_ON')">Turn ON LED 32</button>
+  <button class="btn" onclick="sendCmd('LED32_OFF')">Turn OFF LED 32</button>
+  <button class="btn" onclick="sendCmd('LED27_ON')">Turn ON LED 27</button>
+  <button class="btn" onclick="sendCmd('LED27_OFF')">Turn OFF LED 27</button>
+
+  <div class="status" id="status">Connecting...</div>
+
+  <script>
+    const status = document.getElementById("status");
+    const socket = new WebSocket("wss://digital-twin-3uep.onrender.com/");
+
+    socket.addEventListener("open", () => {
+      status.textContent = "✅ Connected to WebSocket";
+    });
+
+    socket.addEventListener("close", () => {
+      status.textContent = "❌ Disconnected from WebSocket";
+      status.style.color = "red";
+    });
+
+    socket.addEventListener("error", (err) => {
+      console.error("WebSocket error:", err);
+      status.textContent = "⚠️ WebSocket Error";
+      status.style.color = "orange";
+    });
+
+    function sendCmd(cmd) {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(cmd);
+        console.log("Sent:", cmd);
+      } else {
+        alert("WebSocket not connected!");
+      }
+    }
+  </script>
+</body>
+</html>
