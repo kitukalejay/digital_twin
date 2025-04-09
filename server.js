@@ -85,39 +85,91 @@
 
 
 
-const WebSocket = require('ws');
-const http = require('http');
+// const WebSocket = require('ws');
+// const http = require('http');
 
-const port = process.env.PORT || 10000;
+// const port = process.env.PORT || 10000;
 
-const server = http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end("WebSocket Server is running");
-});
+// const server = http.createServer((req, res) => {
+//   res.writeHead(200);
+//   res.end("WebSocket Server is running");
+// });
 
+// const wss = new WebSocket.Server({ server });
+
+// wss.on('connection', (ws) => {
+//   console.log('🔌 Client connected');
+
+//   ws.on('message', (message) => {
+//     const text = message.toString().trim();
+//     console.log('📩 Received:', text);
+
+//     // 🔁 Broadcast the message to ALL connected clients (including ESP32)
+//     wss.clients.forEach((client) => {
+//       if (client.readyState === WebSocket.OPEN) {
+//         client.send(text);
+//       }
+//     });
+//   });
+
+//   ws.on('close', () => {
+//     console.log('❌ Client disconnected');
+//   });
+// });
+
+// server.listen(port, () => {
+//   console.log(`🚀 Server running on port ${port}`);
+// });
+
+
+
+
+
+const WebSocket = require("ws");
+const express = require("express");
+
+const app = express();
+const server = require("http").createServer(app);
 const wss = new WebSocket.Server({ server });
 
-wss.on('connection', (ws) => {
-  console.log('🔌 Client connected');
+let clients = [];
 
-  ws.on('message', (message) => {
-    const text = message.toString().trim();
-    console.log('📩 Received:', text);
+wss.on("connection", (ws) => {
+  console.log("Client connected");
 
-    // 🔁 Broadcast the message to ALL connected clients (including ESP32)
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(text);
+  clients.push(ws);
+
+  ws.on("message", (message) => {
+    try {
+      const data = JSON.parse(message);
+
+      if (data.type === "position_update") {
+        console.log("Position update received:", data.payload);
+
+        // Broadcast to all clients except sender
+        clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: "position_update",
+              payload: data.payload
+            }));
+          }
+        });
+      } else if (data.type === "command") {
+        // Handle other command types if needed
       }
-    });
+    } catch (e) {
+      console.error("Invalid JSON:", e);
+    }
   });
 
-  ws.on('close', () => {
-    console.log('❌ Client disconnected');
+  ws.on("close", () => {
+    console.log("Client disconnected");
+    clients = clients.filter((c) => c !== ws);
   });
 });
 
-server.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`WebSocket server is running on port ${PORT}`);
 });
-
